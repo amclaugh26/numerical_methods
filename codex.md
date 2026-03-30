@@ -75,3 +75,48 @@ This file is for persistent repo-specific notes that should make future FINM ass
 - `finm320-26-hw1.pdf` was text-based and recoverable without OCR.
 - The generated instructions file is `homework1instructions.md`.
 - Problem 2 included a footnote about polynomial skew parameterizations and SVI; that footnote was worth preserving explicitly.
+
+## Problem 1 Support Notes
+
+- In Problem 1(a), "calculate the forward price" means infer the time-0 forward price from option midpoints using put-call parity. It does not mean forecast the future index level.
+- The key formula is:
+  - `F = K + exp(r*T) * (CallMid - PutMid)`
+- Compute midpoint prices first:
+  - `CallMid = (CallBid + CallAsk) / 2`
+  - `PutMid = (PutBid + PutAsk) / 2`
+- To choose the strike used for the final forward estimate, minimize:
+  - `abs(CallMid - PutMid)`
+- The absolute value matters because `CallMid - PutMid` changes sign around the forward. The assignment wants the strike where that difference is closest to zero.
+- The "ATM row" is only used to estimate a scalar forward `F`. Do not use the ATM strike itself as the OTM classification threshold afterward.
+- For Problem 1(b), determine OTM status using `F`, not the chosen ATM strike:
+  - if `Strike > F`, the call is OTM
+  - if `Strike < F`, the put is OTM
+- When the put is OTM, convert the put midpoint into an implied call midpoint using:
+  - `ImpliedCallMid = PutMid + exp(-r*T) * (F - Strike)`
+- The combined call-price column for the IV solver should be:
+  - `CallOrImpliedCall = CallMid` when `Strike > F`
+  - `CallOrImpliedCall = ImpliedCallMid` when `Strike < F`
+- A good implementation pattern is:
+  - `options['CallOrImpliedCall'] = np.where(options['Strike'] > F, options['CallMid'], options['ImpliedCallMid'])`
+
+## Problem 1 Debugging Notes
+
+- If the code computing `ImpliedCallMid` uses `(CallBid - CallAsk) / 2`, that is wrong. That calculates half the negative spread, not a midpoint or implied call.
+- If the IV calculation throws `TypeError: AnalyticEngine.BSpriceCall() missing 1 required positional argument: 'contract'`, the bug is inside `AnalyticEngine.IV`, not in the `options['IV']` apply line.
+- The correct Brent root line is:
+  - `brentq(lambda sigma_guess: self.BSpriceCall(dynamics_try.update_sigma(sigma_guess), contract) - C, lo, hi)`
+- Before trusting the skew plot, verify:
+  - the chosen ATM row
+  - the scalar `F`
+  - the first few rows of `PutMid`, `CallMid`, `ImpliedCallMid`, and `CallOrImpliedCall`
+  - that the IV plot contains values across the full strike range
+- For this specific Homework 1 dataset, the current logic selects strike `2265` as the near-ATM row and implies `F` of about `2265.4012`. This is a useful quick sanity check if the notebook is rerun later.
+
+## Communication Notes
+
+- Likely confusion points to explain early when helping on similar assignments:
+  - the difference between spot, forward, and the chosen ATM strike
+  - why `abs(CallMid - PutMid)` is used
+  - why OTM classification is based on `F`
+  - why the notebook converts OTM puts into implied calls before solving for IV
+- When reviewing homework progress, prioritize checking alignment with the assignment wording over only checking whether the notebook runs.
