@@ -120,3 +120,62 @@ This file is for persistent repo-specific notes that should make future FINM ass
   - why OTM classification is based on `F`
   - why the notebook converts OTM puts into implied calls before solving for IV
 - When reviewing homework progress, prioritize checking alignment with the assignment wording over only checking whether the notebook runs.
+
+## Problem 2 Support Notes
+
+- For Problem 2(a), the fitting target is the quartic volatility skew:
+  - `sigma_p(k) = alpha0 + alpha1*k + alpha2*k**2 + alpha3*k**3 + alpha4*k**4`
+- The assignment objective is least squares across strikes:
+  - minimize `sum((observed_IV - sigma_p(k))**2)`
+- `numpy.polyfit(k, iv_obs, 4)` is an appropriate direct way to solve that least-squares problem.
+- `np.polyfit` returns coefficients in descending powers:
+  - `[alpha4, alpha3, alpha2, alpha1, alpha0]`
+- `np.polyval(coeffs, k)` and `np.poly1d(coeffs)` expect that same descending-power order. Do not reorder coefficients before using `polyval` or `poly1d`.
+- If the user wants homework-style named alphas, map them explicitly:
+  - `alpha4, alpha3, alpha2, alpha1, alpha0 = coeffs`
+- Use `k = log(Strike / F)` for Problem 2, consistent with the prompt. The fit and the plot should both be against `k`, not raw strike.
+- A good plotting pattern is:
+  - markers: observed IV vs `k`
+  - line: fitted `sigma_p(k)` on a smooth `k_grid`
+
+## Problem 2 Interpretation Notes
+
+- "Most overpriced" in part (b) is defined in implied-vol terms, not dollar-price terms.
+- The correct residual is:
+  - `IVResidual = IV - SigmaP`
+- The most overpriced contract is the strike with the largest positive IV residual:
+  - `idxmax()` on `IVResidual`
+- For this specific Homework 1 notebook state, the current overpriced strike output is `2570`, which corresponds to an OTM call because `2570 > F`.
+- In part (c), the key chain-rule result is:
+  - `dPrice/dalpha1 = vega * d(sigma_p)/dalpha1`
+- Since `d(sigma_p)/dalpha1 = k`, the rowwise sensitivity is:
+  - `skewsensitivity = vega * k`
+- In code, prefer:
+  - `options['skewsensitivity'] = options['vega'] * options['k']`
+  rather than multiplying by a separate free-floating `k` variable.
+
+## Problem 2 Vega Notes
+
+- The notebook's `BSvega` routine expects a `GBMdynamics` object and a `CallOption` object.
+- For Problem 2(c)/(d), the vega at each strike should use the fitted model volatility `SigmaP` at that strike, not the observed IV.
+- A correct rowwise pattern is:
+  - `options['vega'] = options.apply(lambda row: hw1analytic.BSvega(GBMdynamics(X=F, r=r, rGrow=0, sigma=row['SigmaP']), CallOption(K=row.Strike, T=T)), axis=1)`
+- Using call vega is fine here because Black-Scholes call and put vegas are the same for the same strike and maturity.
+
+## Problem 2 Review Checklist
+
+- Confirm `k` is computed as `log(Strike / F)`.
+- Confirm the fitted curve is evaluated from the quartic coefficients without reordering errors.
+- Confirm any "overpriced" result is based on `IV - SigmaP`, not on raw price residuals.
+- Confirm `vega` uses fitted `SigmaP`.
+- Confirm `skewsensitivity = vega * k`.
+- Confirm part (d) uses:
+  - `idxmax()` for the biggest gainer
+  - `idxmin()` for the biggest loser
+- If reviewing for submission quality, check whether the notebook or writeup explicitly states the analytical formula for part (c), since code alone may not satisfy a "write a formula" instruction.
+
+## Homework 1 Problem 2 Sanity Checks
+
+- Current notebook output for part (b): overpriced strike `2570`.
+- Current notebook output for part (d): biggest gainer `2385`, biggest loser `2100`.
+- `np.polyfit` does not enforce the prompt's positivity condition `sigma_p(k) > 0`; if needed, add a quick check that fitted values remain positive over the observed `k` range.
