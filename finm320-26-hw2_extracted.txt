@@ -1,0 +1,115 @@
+FINM 32000: Homework 2
+Due Tuesday April 7, 2026 at 11:59pm
+Problem 1
+Consider a particular stock index that is defined to have value equal to the price of a fixed basket
+of non-dividend-paying stocks. Suppose that it follows the Black-Scholes dynamics withσ= 0.4,
+and that the time-0 index level isS0= 100. Consider a three-month (=0.25 year) up-and-out
+European put, struck at 95, with a discretely-monitored knock-out barrier at 114, observed at
+times 0.02,0.04,...,0.24. That is, our option knocks out if and only if the index is at or above 114
+at an observation time (where the unit of time in this course will always be years, unless otherwise
+indicated). Let the constant risk-free interest rate ber= 0.
+(a) Write a Python function to price our option at time 0 using a trinomial tree with probabilities
+specified in L2.21. Some of the code is already provided for you.
+The provided code uses the time step ∆t=T/Nas suggested in class. We will want the
+barrier-monitoring times to be represented in the tree, preferably without introducing unequal
+time intervals anywhere, so we will want to chooseNa multiple of 25. Your code should
+be able to accept any suchN; a user who desires high accuracy can chooseNlarge; a user
+who desires high speed can chooseNsmall. For FINM 32000, please report a price usingN
+chosen large enough that your output has converged, in your judgment (no proof needed), to
+within $0.01 of the true price. In this example,N= 100 will not be sufficient.
+The provided code chooses the space step ∆xsuch that the log of the barrier levelH= 114
+is exactly halfway between consecutive log price levels of the tree. Subject to this constraint,
+it chooses ∆xclose to the recommendedσ√
+3∆tvalue. In other words, the constraint is that
+there exists an integerjsuch that log(114) is halfway between thejth and (j+1)th log-price
+levels:
+logS0+(j+0.5)∆x= logH.
+and the integerjis chosen such that the ∆xwhich satisfies the constraint is approximately
+σ√
+3∆t, so we take
+j=
+log(H/S0)
+σ√
+3∆t−0.5
+Why do we have this “halfway between” requirement? If you try instead putting logHata
+log-price level, you will find the accuracy to be worse than the “halfway between” procedure,
+for this discretely monitored barrier option.
+
+(b) Consider an up-and-input with the same terms. Specifically, this option has the same strike,
+expiry, barrier, and monitoring dates, but it pays at expiry the put payoff only if the index
+was at or above the 114 knock-inbarrier at some monitoring date; otherwise, it pays nothing.
+Using your part (a) result, find the time-0 price of the up-and-in put.
+(c) Consider acontinuously-monitoredbarrier option paying at timeT= 0.25, the amount
+(95−S0.25)+1max0≤t≤0.25St<114,
+where the indicator variable1(A) :=1A:= 1 if eventAoccurs, 0 otherwise.
+(c1) Is the time-0 price of the continuously-monitored barrier option greater than or smaller
+than the time-0 price of the discretely-monitored option in (a)? Justify briefly without doing
+any numerical calculations (one sentence is enough).
+(c2) The continuously monitored barrier option can be replicated by a portfolio ofT-expiry
+options, long 1 plain vanilla put struck at 95, and shortαplain vanilla calls struck at 136.8.
+The replication strategy is as follows. IfSdoes not hit the barrier before timeT, then simply
+collect the time-Tpayout of the 95 put, as desired. IfSdoes hit the barrier, then at the time
+whenSisat the barrier, the 1 unit of the vanilla put has value thatexactly cancelsthe value
+of the−αunits of the plain vanilla call; so at that time, we close out the portfolio positions,
+for a net payment ofzero, as desired.
+Solve analytically for the quantityαthat makes this replication strategy valid, and find the
+time-0 value of the continuously-monitored barrier option. Do not use a tree.
+Problem 1: Coding
+Complete the coding of the functionprice
+upandoutin the provided filehw1.ipynb. The command
+hw1tree.price
+upandout(hw1dynamics, hw1contract)must run properly, as it is currently writ-
+ten. Moreover, it should also still run properly, if you change the input parameters, such asN(which
+you will need to do, asN= 100 is insufficient for the desired level of accuracy), or other param-
+eters, such as the volatility (therefore, the0.4volatility, and the other parameters should not be
+hard-coded into the functionprice
+upandout.)
+Do not modify the header ofprice
+upandout(unless you want to add “type hints”). You may
+modify other lines in the file.
+You donotneed to make your code valid for contract parameters that would alter the contract’s
+logic. In particular, you may assume thatH > S0> K. Thus, you do not need to strive for
+maximum generality. But parameter perturbations that preserve the basic nature of the problem
+should run properly.
+Problem 2 is at the end of this document
+
+Problem 1: Discussion
+▶Note that the introductory paragraph of Problem 1 specifies the optioncontractand the
+underlyingdynamics. That paragraph says nothing about valuationmethod/algorithm.
+The knock-out dates, described in that paragraph, are features of thecontract. They are
+written into the terms of the option. Whatever methodology/algorithm that a modeler might
+choose tovaluethe contract (analytic approximation, or tree with 500 steps, or tree with
+5000 steps, or Monte Carlo) has no impact on the specification of thecontract, which dictates
+that the barrier observation times are 0.02,0.04,...,0.24.
+▶A useful diagnostic: test whether your code – with the barrier conditionsremoved– prices
+Europeans correctly, compared to Black-Scholes.
+▶When you introduce the barrier, one possible cause of error is code that fails to detect that
+you are at a monitoring date.
+Beware of code that tests whether two floating point numbers are equal by naively using==.
+Consider this example in Python:
+In [1]: 0.14 / 0.02 == 7
+Out[1]: False
+which happens because my computer calculates 0.14/0.02 and gets 7.000000000000001.
+Floating point arithmetic should not be assumed to be exact. If you need to test whether
+two floating point numbersxandyare equal, then instead of using==, it would be better to
+test whetherabs(x-y)is smaller than some tolerance.
+
+Problem 2
+(a) Interest rate is 0. A non-dividend-paying stockShas time-0 priceS0= 100. At time 0, you
+observe the dollar prices of at-the-money (K= 100) European calls onSat 0.5-year and
+1-year expiries to be 11.25 and 12.00, respectively.
+Find the time-0 Black-Scholes implied volatilities of these two options.
+(b) Consider an at-the-money European call onSwith expiry 0.75. Suppose that you try to price
+it by assuming that its implied volatility is equal to the midpoint (the arithmetic average) of
+the 0.5-expiry and the 1.0-expiry implied volatilities. Under that assumption, what would be
+the time-0 price of the 0.75-expiry call?
+(c) The price computed in (b) would allow arbitrage involving the 0.75-expiry call and one of the
+other contracts. Describe the steps of this arbitrage.
+You may assume either cash settlement or physical settlement of these options, but specify
+what your assumption is.
+Cash settlement of an in-the-money option at timeTmeans that you receiveST−Kdollars
+if you are long the contract,K−STdollars if you are short the contract. Physical settlement
+of an in-the-money option at timeTmeans that you receive 1 share of stock and−Kdollars
+if you are long the contract, or−1 share of stock and +Kdollars if you are short the contract.
+(Conclusion: Expiry interpolation should not be done by linear interpolation of implied volatility.
+A better alternative would be linear interpolation of the total implied varianceσ2impT).

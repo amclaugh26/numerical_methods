@@ -1,0 +1,4 @@
+interface:
+  display_name: "PDF Text Extraction"
+  short_description: "Extract PDF text or Markdown with robust local fallbacks"
+  default_prompt: "Convert a PDF to text or Markdown, validate completeness, and avoid missing sections."
