@@ -179,3 +179,68 @@ This file is for persistent repo-specific notes that should make future FINM ass
 - Current notebook output for part (b): overpriced strike `2570`.
 - Current notebook output for part (d): biggest gainer `2385`, biggest loser `2100`.
 - `np.polyfit` does not enforce the prompt's positivity condition `sigma_p(k) > 0`; if needed, add a quick check that fitted values remain positive over the observed `k` range.
+
+## Homework 2 Process Notes
+
+- Before reviewing or modifying a homework notebook, confirm the active notebook filename from the user's current context. For Homework 2, the working file was `homework_2.ipynb`, not `finm320-26-hw2.ipynb`.
+- When the user asks for review or guidance, default to explanation mode first and avoid editing unless the user explicitly asks for file changes.
+- Compare the notebook against the assignment instructions before reviewing individual cells. This catches template mismatches early and avoids debugging the wrong contract.
+- For submission checks, review both:
+  - code correctness
+  - markdown/writeup completeness, labels, and typos
+- Common last-pass issues were:
+  - stale template parameters
+  - missing subpart writeups even when code existed
+  - mislabeled maturities in final answers
+  - missing closing `$` in markdown math
+
+## Homework 2 Barrier Tree Notes
+
+- The Homework 2 PDF used barrier `114`, while one template reference used `107`. Always trust the assignment instructions over stale template placeholders.
+- In the trinomial tree, smaller array indices corresponded to higher stock prices because:
+  - `Sgrid = S0 * exp(linspace(N, -N) * deltax)`
+- With that indexing convention:
+  - up child = `optionprice[:-2]`
+  - middle child = `optionprice[1:-1]`
+  - down child = `optionprice[2:]`
+- For the barrier recursion:
+  - compute the parent-layer option values first
+  - shrink the stock-price layer with `Sgrid = Sgrid[1:-1]`
+  - apply the barrier mask only on observation layers
+- Use integer observation-step logic, not float-time modulo checks. A good pattern is:
+  - `step = int(round(t / deltat))`
+  - `obs_steps = int(round(contract.observationinterval / deltat))`
+  - apply the barrier when `step % obs_steps == 0 and step != 0`
+- For this assignment, convergence evidence was:
+  - `N=100` -> about `5.31198`
+  - `N=500` -> about `5.30432`
+  - `N=1000` -> about `5.30155`
+  - `N=10000` -> about `5.30107`
+  So `N=1000` was sufficient for the stated `$0.01` tolerance.
+
+## Homework 2 Barrier Option Notes
+
+- For the discretely monitored up-and-in put, use knock-in / knock-out parity:
+  - `UpAndInPut = VanillaPut - UpAndOutPut`
+- For the continuously monitored up-and-out put replication in part `1(c2)`:
+  - barrier `H = 114`
+  - put strike `K = 95`
+  - call strike `136.8`
+  - replication weight `alpha = K / H = 95 / 114`
+- The time-0 replicated value is:
+  - `V0 = P(100, 95, 0.25) - (95/114) * C(100, 136.8, 0.25)`
+- A concise explanation for the "halfway between" barrier placement:
+  - putting the barrier on a node forces a discontinuity directly onto a node value
+  - putting it halfway between adjacent log-price nodes represents the discontinuity between nodes and reduces asymmetric approximation error
+
+## Homework 2 Term Structure Notes
+
+- For ATM European calls on a non-dividend-paying stock with `r = 0`, call price must be nondecreasing in maturity for fixed strike.
+- In Homework 2, the midpoint-IV price for the `0.75`-year call came out to about `12.08153`, which exceeded the observed `1.0`-year call price `12.00`.
+- The clean arbitrage argument in part `2(c)` is:
+  - assume cash settlement
+  - short the overpriced `0.75`-year call
+  - long the cheaper `1.0`-year call with the same strike
+  - collect the time-0 price difference
+  - at `t = 0.75`, the remaining `1.0`-year call value is always enough to cover the short call's cash-settlement obligation
+- Do not overcomplicate that part with a convex-combination argument if simple maturity monotonicity already proves the arbitrage.
