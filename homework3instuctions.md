@@ -1,14 +1,14 @@
 ## Problem 1
 
-The Gold Dragon Coin (GDC) is a unit of currency in Westeros. Let S denote the GDC/USD
-exchange rate (the USD value of 1 GDC). Assume S has dynamics
+The Gold Dragon Coin (GDC) is a unit of currency in Westeros. Let $$S$$ denote the GDC/USD
+exchange rate (the USD value of 1 GDC). Assume $$S$$ has dynamics
 
 $$
 dS_t = (r-q)S_tdt + \sigma(S_t,t)S_tdW_t,
 $$
 
 where W is Brownian motion under the [USD] risk-neutral probability measure. The USD interest
-rate is r = 0.06, the GDC interest rate is q = 0.01, today’s time-0 spot is S0 = 100, and
+rate is $$r = 0.06$$, the GDC interest rate is $$q = 0.01$$, today’s time-0 spot is $$S_0 = 100$$, and
 
 $$
 \sigma(S,t) := \mathrm{min}[0.2+5(\mathrm{log}(S/100))^2+0.1\exp{-t}, 0.6].
