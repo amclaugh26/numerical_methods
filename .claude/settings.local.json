@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -)",
+      "Bash(pdftotext -layout \"c:/Users/armcl/Documents/Git Repos/numerical_methods/finm320-26-hw4.pdf\" -)"
+    ]
+  }
+}
